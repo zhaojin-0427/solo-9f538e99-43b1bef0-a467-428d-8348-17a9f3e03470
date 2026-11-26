@@ -1,0 +1,177 @@
+{% extends "base.html" %}
+{% block title %}补位预览 · 影展评审调度{% endblock %}
+{% block content %}
+{% set plan = view.plan %}
+{% set bmap = blocker_map if (blocker_map is defined and blocker_map) else view.blocker_map %}
+
+<div class="toolbar" style="justify-content:space-between">
+  <div>
+    <h1 style="margin-bottom:2px">补位预览</h1>
+    <div class="kv">预览单号 <span class="mono">{{ view.token[:10] }}…</span>
+      · 生成于 {{ view.created_at }}
+      · 状态
+      {% if view.status == 'confirmed' %}<span class="badge confirmed">已确认执行</span>
+      {% elif view.status == 'stale' %}<span class="badge stale">已失效，需重算</span>
+      {% else %}<span class="badge open">待确认</span>{% endif %}
+    </div>
+  </div>
+  <form method="post" action="{{ url_for('main.preview_create') }}">
+    <button class="btn secondary" type="submit">↻ 重新计算（生成新预览）</button>
+  </form>
+</div>
+
+{% if msg %}<div class="alert info">{{ msg }}</div>{% endif %}
+
+{% if view.status == 'confirmed' and view.result %}
+  <div class="alert ok">
+    ✅ 已整批执行该预览：撤掉 {{ view.result.removed_assignment_ids|length }} 张旧派单，
+    新派 {{ view.result.added|length }} 张。旧单交分现已拒收。
+    <div class="pill-list" style="margin-top:8px">
+      {% for aid in view.result.removed_assignment_ids %}<span class="pill">撤 #{{ aid }}</span>{% endfor %}
+      {% for a in view.result.added %}<span class="pill">新 #{{ a.assignment_id }} {{ a.judge_code }}→{{ a.work_code }}</span>{% endfor %}
+    </div>
+  </div>
+{% endif %}
+
+{% if confirm_error is defined and confirm_error %}
+  <div class="alert err">
+    ⛔ <strong>确认被拒绝：</strong>{{ confirm_error }}
+    {% if blockers is defined and blockers %}
+      <ul>{% for b in blockers %}<li>{{ b.message }}</li>{% endfor %}</ul>
+    {% endif %}
+    {% if validation_errors is defined and validation_errors %}
+      <ul>{% for e in validation_errors %}<li>{{ e }}</li>{% endfor %}</ul>
+    {% endif %}
+    <div style="margin-top:8px">请点击右上角“重新计算”，核对新预览后重新确认。</div>
+  </div>
+{% elif view.status == 'stale' and view.conflict_reason %}
+  <div class="alert err">⛔ {{ view.conflict_reason }}</div>
+{% elif view.status == 'open' and view.blockers %}
+  <div class="alert warn">
+    ⚠️ 预览生成后，下列“拟撤旧单”已收到新分或状态变化，当前预览不能直接确认；
+    请重新计算并重新确认。
+    <ul>{% for b in view.blockers %}<li>{{ b.message }}</li>{% endfor %}</ul>
+  </div>
+{% elif view.status == 'open' and view.validation_errors %}
+  <div class="alert warn">
+    ⚠️ 当前数据相对预览已变化，整批校验未通过，请重新计算。
+    <ul>{% for e in view.validation_errors %}<li>{{ e }}</li>{% endfor %}</ul>
+  </div>
+{% endif %}
+
+<p class="help">
+  预览与重算期间不锁定任何数据，评委可照常交分。规则：已交分的有效派单一律保留并占容量；
+  仅当预览列出的“拟撤旧待评单”收到新分时，才必须重算重确认；其他派单交分不妨碍确认。
+</p>
+
+{% if plan.errors %}
+  <div class="alert err"><strong>当前数据存在无法在保留已交分前提下修复的冲突：</strong>
+    <ul>{% for e in plan.errors %}<li>{{ e }}</li>{% endfor %}</ul>
+  </div>
+{% endif %}
+
+{% if not plan.complete %}
+  <div class="alert err">
+    <strong>无法补齐全部席位。</strong>
+    下列作品在遵守回避关系与评委接单上限的前提下仍缺评委；本次预览<strong>不会改动任何派单</strong>，
+    原有有效派单照旧。可考虑提高评委上限、增加评委或调整回避关系后重新计算。
+  </div>
+  <div class="panel tight">
+    <table class="grid">
+      <thead><tr><th>缺评委的作品</th><th>现有有效评分</th><th>最大方案中可补席位</th><th>仍缺席位</th><th>未回避候选评委数</th></tr></thead>
+      <tbody>
+      {% for s in plan.short_works %}
+        <tr>
+          <td class="mono"><strong>{{ s.work_code }}</strong></td>
+          <td>{{ s.valid_scores }}/2</td>
+          <td>{{ s.pending_on_plan }}</td>
+          <td><span class="badge stale">缺 {{ s.need_more_seats }} 席</span></td>
+          <td>{{ s.eligible_judges }}</td>
+        </tr>
+      {% else %}
+        <tr><td colspan="5" class="kv">无具体作品条目（可能是固定已交分派单超过评委上限等全局冲突，见上方错误）。</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% else %}
+
+<div class="cards">
+  <div class="stat"><div class="n">{{ plan.remove|length }}</div><div class="l">拟撤旧待评派单（已最少化）</div></div>
+  <div class="stat"><div class="n">{{ plan.add|length }}</div><div class="l">拟新增派单</div></div>
+  <div class="stat"><div class="n">{{ plan.fixed_scored|length }}</div><div class="l">保留的已交分派单</div></div>
+  <div class="stat"><div class="n">{{ plan.kept_pending|length }}</div><div class="l">保留的待评旧单</div></div>
+</div>
+
+<div class="plan-cols">
+  <div class="panel tight">
+    <table class="grid">
+      <thead><tr><th colspan="4">① 撤掉的旧待评派单（最少撤单）</th></tr>
+      <tr><th>派单号</th><th>作品</th><th>评委</th><th>实时状态</th></tr></thead>
+      <tbody>
+      {% for r in plan.remove %}
+        {% set bl = bmap.get(r.assignment_id) %}
+        <tr class="{% if bl %}row-danger{% endif %}">
+          <td class="mono">#{{ r.assignment_id }}</td>
+          <td class="mono">{{ r.work_code }}</td>
+          <td class="mono">{{ r.judge_code }}</td>
+          <td>
+            {% if bl and bl.type == 'scored' %}
+              <span class="badge stale">已收到新分 {{ bl.score|score_fmt }}，需重算</span>
+            {% elif bl %}
+              <span class="badge stale">状态已变化，需重算</span>
+            {% else %}
+              <span class="badge pending">待评 · 可撤</span>
+            {% endif %}
+          </td>
+        </tr>
+      {% else %}
+        <tr><td colspan="4" class="kv">无需撤掉任何旧待评派单。</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="panel tight">
+    <table class="grid">
+      <thead><tr><th colspan="3">② 新增补位派单</th></tr>
+      <tr><th>作品</th><th>评委</th><th></th></tr></thead>
+      <tbody>
+      {% for a in plan.add %}
+        <tr><td class="mono">{{ a.work_code }}</td><td class="mono">{{ a.judge_code }}</td>
+            <td><span class="badge active">新派</span></td></tr>
+      {% else %}
+        <tr><td colspan="3" class="kv">无需新增派单（席位已满）。</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="panel">
+  <div class="pill-list" style="margin-bottom:6px">
+    <strong class="kv">保留的已交分派单：</strong>
+    {% for aid in plan.fixed_scored %}<span class="pill">#{{ aid }}</span>{% else %}<span class="kv">无</span>{% endfor %}
+  </div>
+  <div class="pill-list">
+    <strong class="kv">保留的待评派单：</strong>
+    {% for aid in plan.kept_pending %}<span class="pill">#{{ aid }}</span>{% else %}<span class="kv">无</span>{% endfor %}
+  </div>
+</div>
+
+{% if view.status == 'open' and view.applicable %}
+  <form method="post" action="{{ url_for('main.preview_confirm', token=view.token) }}"
+        onsubmit="return confirm('确认整批执行预览列出的撤单与改派？\n撤 {{ plan.remove|length }} 单 / 新派 {{ plan.add|length }} 单。\n写入采用单事务，失败会整体回滚。');">
+    <button class="btn danger" type="submit" style="font-size:15px;padding:10px 22px">
+      ✅ 确认执行这批改派
+    </button>
+    <span class="help" style="margin-left:10px">确认时会再次校验：若拟撤单刚收到新分，将拒绝并要求重算。</span>
+  </form>
+{% elif view.status == 'confirmed' %}
+  <span class="badge confirmed" style="font-size:14px;padding:6px 14px">该预览已执行完毕</span>
+{% else %}
+  <button class="btn" disabled>存在变化，请先重新计算</button>
+{% endif %}
+
+{% endif %}
+{% endblock %}

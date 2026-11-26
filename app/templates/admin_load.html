@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}载入 JSON · 影展评审调度{% endblock %}
+{% block content %}
+<h1>从 JSON 载入数据</h1>
+<p class="sub">JSON 包含：作品编号（至多 24 件）、评委接单上限、回避关系、原派单（可带初始分数）。
+  格式参见仓库内 <span class="mono">data/sample_data.json</span>。</p>
+
+{% if form_error %}
+  <div class="alert err"><strong>载入失败，数据库未改动：</strong>
+    <ul>{% for e in form_error %}<li>{{ e }}</li>{% endfor %}</ul>
+  </div>
+{% endif %}
+{% if summary %}
+  <div class="alert ok">
+    ✅ 载入成功：作品 {{ summary.works }} 件、评委 {{ summary.judges }} 位、
+    回避关系 {{ summary.recusals }} 条、原派单 {{ summary.assignments }} 张。
+    <a href="{{ url_for('main.index') }}">前往总览 →</a>
+  </div>
+{% endif %}
+
+<div class="panel">
+  <form method="post" action="{{ url_for('main.admin_load_submit') }}" enctype="multipart/form-data">
+    <label class="field">
+      <span>选择 JSON 文件</span>
+      <input type="file" name="json_file" accept=".json,application/json">
+    </label>
+    <label class="field">
+      <span>或直接粘贴 JSON</span>
+      <textarea name="json_text" placeholder='{"works":[{"code":"W01"}],"judges":[{"code":"J01","capacity":5}],...}'></textarea>
+    </label>
+    <label class="field">
+      <span>写入方式</span>
+      <select name="mode">
+        <option value="replace" selected>替换：清空现有全部数据后载入（演示用）</option>
+        <option value="merge">追加：保留现有数据（主键冲突会失败回滚）</option>
+      </select>
+    </label>
+    <div class="toolbar">
+      <button class="btn" type="submit">上传 / 粘贴并载入</button>
+    </div>
+  </form>
+  <form method="post" action="{{ url_for('main.admin_load_submit') }}" class="inline">
+    <input type="hidden" name="use_sample" value="1">
+    <button class="btn secondary" type="submit">重新载入内置样例（替换全部数据）</button>
+  </form>
+</div>
+{% endblock %}

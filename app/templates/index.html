@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block title %}总览 · 影展评审调度{% endblock %}
+{% block content %}
+<h1>作品评分总览</h1>
+<p class="sub">每件作品须由两名不同评委打分；收齐两份有效评分才显示总分。补报回避后，对应派单与评分立即作废。</p>
+
+<div class="cards">
+  <div class="stat"><div class="n">{{ works|length }}</div><div class="l">作品数（上限 24）</div></div>
+  <div class="stat"><div class="n">{{ judges|length }}</div><div class="l">评委数</div></div>
+  <div class="stat"><div class="n">{{ works | selectattr('total_ready') | list | length }}</div><div class="l">已出总分作品</div></div>
+  <div class="stat"><div class="n">{{ works | map(attribute='active_count') | sum }}</div><div class="l">有效派单（含已交分，均占容量）</div></div>
+</div>
+
+<div class="toolbar">
+  <a class="btn" href="{{ url_for('main.preview_latest') }}">生成补位预览</a>
+  <a class="btn secondary" href="{{ url_for('main.recusals_page') }}">补报回避</a>
+  <a class="btn secondary" href="{{ url_for('main.judges_page') }}">前往评委派单页</a>
+</div>
+
+<div class="work-grid">
+{% for w in works %}
+  <div class="work-card">
+    <h3><a href="{{ url_for('main.work_detail', code=w.code) }}">{{ w.code }}</a>
+      {% if w.title %}<span class="kv">· {{ w.title }}</span>{% endif %}
+    </h3>
+
+    {% for a in w.active %}
+      <div class="chip {% if a.score is none %}pending{% endif %}">
+        <span>
+          <span class="who">{{ a.judge_code }}</span>
+          <span class="kv">{{ a.judge_name }}</span>
+          {% if a.score is not none %}<span class="badge scored">已交分</span>
+          {% else %}<span class="badge pending">待评</span>{% endif %}
+        </span>
+        {% if a.score is not none %}<span class="sc">{{ a.score | score_fmt }}</span>
+        {% else %}<span class="sc">待提交</span>{% endif %}
+      </div>
+    {% else %}
+      <div class="alert warn" style="margin:0">当前没有有效派单</div>
+    {% endfor %}
+
+    {% if w.voided %}
+      <div class="kv">另有 {{ w.voided|length }} 张已作废派单（见作品详情）</div>
+    {% endif %}
+
+    <div class="total">
+      <span class="t-label">
+        有效评分 {{ w.scored_count }}/2
+      </span>
+      {% if w.total_ready %}
+        <span>
+          <span class="t-value">{{ w.total_score | score_fmt }}</span>
+          <span class="help">总分 · 平均 {{ w.average_score | score_fmt }}</span>
+        </span>
+      {% else %}
+        <span class="t-wait">未收齐两份有效评分，暂不显示总分</span>
+      {% endif %}
+    </div>
+  </div>
+{% endfor %}
+</div>
+
+<h2>评委容量</h2>
+<div class="panel tight">
+  <table class="grid">
+    <thead><tr><th>评委</th><th>姓名</th><th>有效派单 / 上限</th><th style="width:220px">容量</th><th></th></tr></thead>
+    <tbody>
+    {% for j in judges %}
+      <tr>
+        <td class="mono"><strong>{{ j.code }}</strong></td>
+        <td>{{ j.name }}</td>
+        <td>{{ j.active_count }} / {{ j.capacity }}</td>
+        <td><div class="progress"><i style="width: {{ [100, (j.active_count / j.capacity * 100) if j.capacity else 100] | min }}%"></i></div></td>
+        <td><a class="btn small secondary" href="{{ url_for('main.judge_page', code=j.code) }}">派单页交分</a></td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

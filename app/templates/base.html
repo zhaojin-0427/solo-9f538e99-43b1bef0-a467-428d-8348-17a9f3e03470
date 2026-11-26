@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}影展评审调度{% endblock %}</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8E%AC%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<header class="topbar">
+  <div class="container topbar-inner">
+    <a class="brand" href="{{ url_for('main.index') }}">🎬 影展评审调度</a>
+    <nav class="nav">
+      <a href="{{ url_for('main.index') }}">总览</a>
+      <a href="{{ url_for('main.judges_page') }}">评委派单</a>
+      <a href="{{ url_for('main.recusals_page') }}">补报回避</a>
+      <a href="{{ url_for('main.preview_latest') }}">补位预览</a>
+      <a href="{{ url_for('main.events_page') }}">审计记录</a>
+      <a href="{{ url_for('main.admin_load_page') }}">载入 JSON</a>
+    </nav>
+  </div>
+</header>
+<main class="container content">
+  {% block content %}{% endblock %}
+</main>
+<footer class="container footer">
+  Flask + SQLite · 每件作品两名不同评委 · 每单只收一次分 · 确认改派整批事务
+</footer>
+</body>
+</html>

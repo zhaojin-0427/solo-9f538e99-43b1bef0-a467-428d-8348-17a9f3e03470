@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}审计记录 · 影展评审调度{% endblock %}
+{% block content %}
+<h1>操作审计</h1>
+<p class="sub">交分、补报回避、作废派单、预览确认与数据载入都会记录在此（最近 200 条）。</p>
+<div class="panel tight">
+  <table class="grid">
+    <thead><tr><th style="width:170px">时间</th><th style="width:200px">事件</th><th>详情</th></tr></thead>
+    <tbody>
+    {% for e in events %}
+      <tr>
+        <td class="kv">{{ e.row.created_at }}</td>
+        <td><span class="badge open">{{ e.row.kind }}</span></td>
+        <td><pre class="json" style="margin:0;padding:8px 10px">{{ e.detail | tojson(indent=2) }}</pre></td>
+      </tr>
+    {% else %}
+      <tr><td colspan="3" class="kv">暂无事件。</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

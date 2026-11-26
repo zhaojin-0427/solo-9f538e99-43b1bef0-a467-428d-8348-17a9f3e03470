@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}补报回避 · 影展评审调度{% endblock %}
+{% block content %}
+<h1>补报回避</h1>
+<p class="sub">登记“评委本应回避某件作品”后，该评委对该作品的<strong>有效派单及评分立即作废</strong>，随后可生成补位预览。</p>
+
+{% if form_error %}
+  <div class="alert err">⛔ {{ form_error }}</div>
+{% endif %}
+
+<div class="panel">
+  <form method="post" action="{{ url_for('main.recusals_submit') }}">
+    <div style="display:flex;gap:14px;flex-wrap:wrap">
+      <label class="field" style="flex:1;min-width:220px">
+        <span>评委</span>
+        <select name="judge_code" required>
+          <option value="">请选择评委…</option>
+          {% for j in judges %}
+            <option value="{{ j.code }}" {% if sel_judge == j.code %}selected{% endif %}>
+              {{ j.code }} · {{ j.name }}
+            </option>
+          {% endfor %}
+        </select>
+      </label>
+      <label class="field" style="flex:1;min-width:220px">
+        <span>作品</span>
+        <select name="work_code" required>
+          <option value="">请选择作品…</option>
+          {% for w in works %}
+            <option value="{{ w.code }}" {% if (sel_work or request.args.get('work')) == w.code %}selected{% endif %}>
+              {{ w.code }}{% if w.title %} · {{ w.title }}{% endif %}
+            </option>
+          {% endfor %}
+        </select>
+      </label>
+    </div>
+    <label class="field">
+      <span>回避原因（可选）</span>
+      <input type="text" name="reason" value="{{ reason or '' }}"
+             placeholder="例如：评委与导演为师生关系">
+    </label>
+    <button class="btn danger" type="submit"
+            onclick="return confirm('确认补报回避？对应有效派单与评分将立即作废。');">
+      登记回避并作废对应派单
+    </button>
+  </form>
+</div>
+
+<h2>回避名单（{{ recusals|length }}）</h2>
+<div class="panel tight">
+  <table class="grid">
+    <thead><tr><th>评委</th><th>作品</th><th>原因</th><th>来源</th><th>登记时间</th></tr></thead>
+    <tbody>
+    {% for r in recusals %}
+      <tr>
+        <td class="mono">{{ r.judge_code }} <span class="kv">{{ r.judge_name }}</span></td>
+        <td class="mono">{{ r.work_code }}</td>
+        <td>{{ r.reason or '—' }}</td>
+        <td>{% if r.source == 'json' %}<span class="badge open">JSON 载入</span>
+            {% else %}<span class="badge pending">补报</span>{% endif %}</td>
+        <td class="kv">{{ r.created_at }}</td>
+      </tr>
+    {% else %}
+      <tr><td colspan="5" class="kv">暂无回避关系。</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

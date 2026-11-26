@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}评委派单 · 影展评审调度{% endblock %}
+{% block content %}
+<h1>评委与派单页</h1>
+<p class="sub">每位评委有独立的派单页，可直接交分；每张派单只接收一次分数。已交分的有效派单仍占用接单名额。</p>
+
+<div class="panel tight">
+  <table class="grid">
+    <thead><tr><th>评委编号</th><th>姓名</th><th>有效派单</th><th>接单上限</th><th></th></tr></thead>
+    <tbody>
+    {% for j in judges %}
+      <tr>
+        <td class="mono"><strong>{{ j.code }}</strong></td>
+        <td>{{ j.name }}</td>
+        <td>{{ j.active_count }}</td>
+        <td>{{ j.capacity }}</td>
+        <td><a class="btn small" href="{{ url_for('main.judge_page', code=j.code) }}">进入派单页</a></td>
+      </tr>
+    {% else %}
+      <tr><td colspan="5">暂无评委，请先<a href="{{ url_for('main.admin_load_page') }}">载入 JSON</a>。</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

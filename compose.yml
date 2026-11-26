@@ -1,0 +1,21 @@
+services:
+  web:
+    build: .
+    image: festival-recusal:latest
+    container_name: festival-recusal
+    ports:
+      # 默认 http://localhost:8000 ；如需 5000 端口：
+      #   HOST_PORT=5000 docker compose up --build
+      - "${HOST_PORT:-8000}:8000"
+    environment:
+      DB_PATH: /data/festival.db
+      # 如需固定会话密钥可在宿主机 .env / shell 中覆盖
+      SECRET_KEY: ${SECRET_KEY:-compose-dev-secret}
+    volumes:
+      - festival-data:/data
+      # 方便直接修改宿主机 JSON 样例；只读挂载
+      - ./data:/app/data:ro
+    restart: unless-stopped
+
+volumes:
+  festival-data:

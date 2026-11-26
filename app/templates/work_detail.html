@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}{{ work.code }} · 作品详情{% endblock %}
+{% block content %}
+<p class="kv"><a href="{{ url_for('main.index') }}">← 总览</a></p>
+<h1>{{ work.code }} {% if work.title %}<span class="kv">{{ work.title }}</span>{% endif %}</h1>
+<p class="sub">每件作品两名不同评委；仅当两份有效派单都已交分，才显示总分。</p>
+
+<div class="panel">
+  <div class="total" style="border:none;padding:0">
+    <span class="t-label">有效评分 {{ scored_count }}/2</span>
+    {% if total is not none %}
+      <span class="t-value">总分 {{ total | score_fmt }}</span>
+    {% else %}
+      <span class="t-wait">尚未收齐两份有效评分，总分隐藏</span>
+    {% endif %}
+  </div>
+</div>
+
+<h2>派单记录</h2>
+<div class="panel tight">
+  <table class="grid">
+    <thead><tr><th>派单号</th><th>评委</th><th>状态</th><th>分数</th><th>交分时间</th><th>作废时间/原因</th></tr></thead>
+    <tbody>
+    {% for a in assignments %}
+      <tr class="{% if a.status == 'voided' %}voided{% endif %}">
+        <td class="mono">#{{ a.id }}</td>
+        <td><a href="{{ url_for('main.judge_page', code=a.judge_code) }}">{{ a.judge_code }}</a>
+          <span class="kv">{{ a.judge_name }}</span></td>
+        <td>
+          {% if a.status == 'voided' %}<span class="badge voided">已作废</span>
+          {% elif a.score is not none %}<span class="badge scored">有效 · 已交分</span>
+          {% else %}<span class="badge pending">有效 · 待评</span>{% endif %}
+        </td>
+        <td>{% if a.score is not none %}{{ a.score | score_fmt }}{% else %}—{% endif %}</td>
+        <td class="kv">{{ a.submitted_at or '—' }}</td>
+        <td class="kv">
+          {% if a.status == 'voided' %}
+            {{ a.voided_at or '' }} · {{ {'recusal':'补报回避','replacement':'补位改派'} .get(a.void_reason, a.void_reason or '') }}
+          {% else %}—{% endif %}
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<h2>该作品的回避关系</h2>
+<div class="panel tight">
+  <table class="grid">
+    <thead><tr><th>评委</th><th>原因</th><th>登记时间</th></tr></thead>
+    <tbody>
+    {% for r in recusals %}
+      <tr><td class="mono">{{ r.judge_code }} <span class="kv">{{ r.judge_name }}</span></td>
+          <td>{{ r.reason or '—' }}</td><td class="kv">{{ r.created_at }}</td></tr>
+    {% else %}
+      <tr><td colspan="3" class="kv">暂无</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div class="toolbar">
+  <a class="btn" href="{{ url_for('main.recusals_page', work=work.code) }}">为此作品补报回避</a>
+  <a class="btn secondary" href="{{ url_for('main.preview_latest') }}">查看补位预览</a>
+</div>
+{% endblock %}

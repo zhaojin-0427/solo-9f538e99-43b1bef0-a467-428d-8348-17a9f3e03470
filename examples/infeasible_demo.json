@@ -1,0 +1,24 @@
+{
+  "description": "补不齐样例：3 件作品、3 位评委，每人上限 2 单且原派单已满。若对 J03 -> Y02 补报回避并作废该待评单，唯一可补位的 J02 两单都已交分、容量被固定占满，因此 Y02 缺评委，预览不可执行，原有效派单照旧。",
+  "works": [
+    {"code": "Y01", "title": "缺评委示例一"},
+    {"code": "Y02", "title": "缺评委示例二"},
+    {"code": "Y03", "title": "缺评委示例三"}
+  ],
+  "judges": [
+    {"code": "J01", "name": "评委甲", "capacity": 2},
+    {"code": "J02", "name": "评委乙", "capacity": 2},
+    {"code": "J03", "name": "评委丙", "capacity": 2}
+  ],
+  "recusals": [],
+  "assignments": [
+    {"work": "Y01", "judge": "J01", "score": 90},
+    {"work": "Y01", "judge": "J02", "score": 88},
+
+    {"work": "Y02", "judge": "J01", "score": 84},
+    {"work": "Y02", "judge": "J03"},
+
+    {"work": "Y03", "judge": "J02", "score": 77},
+    {"work": "Y03", "judge": "J03", "score": 81}
+  ]
+}

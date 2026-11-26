@@ -1,0 +1,51 @@
+{
+  "description": "影展派单样例：8 件作品、6 位评委（每人上限 3 单）。已知回避关系均已被原派单遵守。演示补位联动：在网页对 J01 -> W07 补报回避（该单已有评分 70），预览会给出“最少撤 1 张待评旧单”的改派链。",
+  "works": [
+    {"code": "W01", "title": "山城夏梦"},
+    {"code": "W02", "title": "午夜信笺"},
+    {"code": "W03", "title": "河流的秘密"},
+    {"code": "W04", "title": "像素花园"},
+    {"code": "W05", "title": "北风车站"},
+    {"code": "W06", "title": "最后的放映员"},
+    {"code": "W07", "title": "潮汐之间"},
+    {"code": "W08", "title": "星尘旅店"}
+  ],
+  "judges": [
+    {"code": "J01", "name": "林岚", "capacity": 3},
+    {"code": "J02", "name": "陈默", "capacity": 3},
+    {"code": "J03", "name": "苏黎", "capacity": 3},
+    {"code": "J04", "name": "周野", "capacity": 3},
+    {"code": "J05", "name": "何田", "capacity": 3},
+    {"code": "J06", "name": "方澄", "capacity": 3}
+  ],
+  "recusals": [
+    {"judge": "J03", "work": "W03", "reason": "与该片摄影指导为同事"},
+    {"judge": "J03", "work": "W07", "reason": "曾参与该片剧本研讨"},
+    {"judge": "J06", "work": "W07", "reason": "与导演有亲属关系"}
+  ],
+  "assignments": [
+    {"work": "W01", "judge": "J01", "score": 88},
+    {"work": "W01", "judge": "J02", "score": 91},
+
+    {"work": "W02", "judge": "J02", "score": 85},
+    {"work": "W02", "judge": "J03"},
+
+    {"work": "W03", "judge": "J04", "score": 78},
+    {"work": "W03", "judge": "J05"},
+
+    {"work": "W04", "judge": "J01"},
+    {"work": "W04", "judge": "J06"},
+
+    {"work": "W05", "judge": "J03", "score": 95},
+    {"work": "W05", "judge": "J04", "score": 89},
+
+    {"work": "W06", "judge": "J05"},
+    {"work": "W06", "judge": "J06", "score": 82},
+
+    {"work": "W07", "judge": "J01", "score": 70},
+    {"work": "W07", "judge": "J05"},
+
+    {"work": "W08", "judge": "J02"},
+    {"work": "W08", "judge": "J04"}
+  ]
+}

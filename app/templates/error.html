@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}出错了 · 影展评审调度{% endblock %}
+{% block content %}
+<div class="error-page">
+  <div class="code">{{ status or 'Error' }}</div>
+  <h1>{{ message }}</h1>
+  <p class="kv">错误代码：{{ code }}</p>
+  <p style="margin-top:22px">
+    <a class="btn" href="{{ url_for('main.index') }}">返回总览</a>
+    <a class="btn secondary" href="javascript:history.back()">返回上一页</a>
+  </p>
+</div>
+{% endblock %}
